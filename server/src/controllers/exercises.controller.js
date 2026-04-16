@@ -50,7 +50,7 @@ export async function generateExercises(req, res) {
 export async function getExercisesByVideo(req, res) {
   const { videoId } = req.params;
   const page = Math.max(1, Number(req.query.page ?? 1));
-  const limit = Math.min(50, Math.max(1, Number(req.query.limit ?? 5)));
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit ?? 10)));
   const offset = (page - 1) * limit;
 
   const rows = await query(
@@ -69,17 +69,14 @@ export async function getExercisesByVideo(req, res) {
   const total = totalResult.rows[0]?.total ?? 0;
   const hasMore = offset + rows.rows.length < total;
 
-  const chunks = rows.rows.length > 0
+  const blocks = rows.rows.length > 0
     ? [
         {
-          chunkId: page,
+          blockId: page,
           sentences: rows.rows.map((row) => ({
             id: row.id,
-            sentence_text: row.sentence_text,
-            masked_sentence: row.masked_sentence,
-            start_time: Number(row.start_time),
-            end_time: Number(row.end_time),
-            blanks_json: row.blanks_json,
+            original: row.sentence_text,
+            blanks: row.blanks_json,
           })),
         },
       ]
@@ -90,6 +87,6 @@ export async function getExercisesByVideo(req, res) {
     limit,
     total,
     hasMore,
-    chunks,
+    blocks,
   });
 }

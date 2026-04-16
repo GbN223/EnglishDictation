@@ -43,8 +43,8 @@ const PRACTICE_TEXTS = {
 
 type PracticeDifficulty = 'Easy' | 'Medium' | 'Hard';
 type PracticeRenderer = 'classic-inline' | 'multi-sentence';
-const SENTENCES_PER_PAGE = 5;
-const INITIAL_PAGES = 2;
+const SENTENCES_PER_BLOCK = 10;
+const INITIAL_BLOCKS = 2;
 
 function splitIntoSentences(text: string): string[] {
   const normalized = text.replace(/\s+/g, ' ').trim();
@@ -105,7 +105,7 @@ export default function PracticeMode() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [renderer, setRenderer] = useState<PracticeRenderer>('classic-inline');
   const [multiScore, setMultiScore] = useState<{ correct: number; total: number } | null>(null);
-  const [page, setPage] = useState(INITIAL_PAGES);
+  const [blockCount, setBlockCount] = useState(INITIAL_BLOCKS);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const currentTexts = PRACTICE_TEXTS[difficulty];
@@ -121,10 +121,10 @@ export default function PracticeMode() {
     try {
       const fetched = await generateExercisesFromText(text);
       setExercises(fetched);
-      setPage(INITIAL_PAGES);
+      setBlockCount(INITIAL_BLOCKS);
     } catch {
       setExercises(buildFallbackExercises(text));
-      setPage(INITIAL_PAGES);
+      setBlockCount(INITIAL_BLOCKS);
     } finally {
       setIsGenerating(false);
     }
@@ -141,7 +141,7 @@ export default function PracticeMode() {
     setAnswers({});
     setShowResult(false);
     setMultiScore(null);
-    setPage(INITIAL_PAGES);
+    setBlockCount(INITIAL_BLOCKS);
     setIsLoadingMore(false);
     setShowOriginal(false);
   };
@@ -171,13 +171,16 @@ export default function PracticeMode() {
     return normalizeAnswer(userValue) === normalizeAnswer(correctWord) ? 'correct' : 'incorrect';
   };
 
-  const visibleSentences = exercises.slice(0, page * SENTENCES_PER_PAGE);
-  const hasMore = visibleSentences.length < exercises.length;
+  // For multi-sentence/paragraph mode, calculate visible blocks
+  const totalBlocks = Math.ceil(exercises.length / SENTENCES_PER_BLOCK);
+  const visibleBlocks = Math.min(blockCount, totalBlocks);
+  const visibleSentences = exercises.slice(0, visibleBlocks * SENTENCES_PER_BLOCK);
+  const hasMore = visibleBlocks < totalBlocks;
 
   const handleLoadMore = () => {
     setIsLoadingMore(true);
     window.setTimeout(() => {
-      setPage((prev) => prev + 1);
+      setBlockCount((prev) => prev + 1);
       setIsLoadingMore(false);
     }, 250);
   };
@@ -450,11 +453,11 @@ export default function PracticeMode() {
               <p className="text-xs text-muted-foreground">Generating deterministic cloze data...</p>
             )}
             <ExerciseList
-              exercises={renderer === 'multi-sentence' ? visibleSentences : exercises}
+              exercises={exercises}
               answers={answers}
               checked={showResult}
               renderer={renderer}
-              chunkSize={4}
+              chunkSize={SENTENCES_PER_BLOCK}
               hasMore={renderer === 'multi-sentence' ? hasMore : false}
               isLoadingMore={renderer === 'multi-sentence' ? isLoadingMore : false}
               onLoadMore={renderer === 'multi-sentence' ? handleLoadMore : undefined}

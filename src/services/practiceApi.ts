@@ -20,15 +20,21 @@ export interface VocabularyInfo {
   source: string;
 }
 
+export interface ParagraphBlock {
+  blockId: number;
+  sentences: Array<{
+    id: number | string;
+    original: string;
+    blanks: ExerciseBlank[];
+  }>;
+}
+
 export interface VideoExercisesPage {
   page: number;
   limit: number;
   total: number;
   hasMore: boolean;
-  chunks: Array<{
-    chunkId: number;
-    sentences: GeneratedExercise[];
-  }>;
+  blocks: ParagraphBlock[];
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8787';
@@ -89,7 +95,7 @@ export async function getWordDefinition(word: string): Promise<VocabularyInfo> {
 export async function getVideoExercisesPage(
   videoId: string,
   page = 1,
-  limit = 5
+  limit = 10
 ): Promise<VideoExercisesPage> {
   const response = await fetch(
     `${API_BASE}/api/exercises/video/${encodeURIComponent(videoId)}?page=${page}&limit=${limit}`
@@ -103,9 +109,13 @@ export async function getVideoExercisesPage(
     limit: number;
     total: number;
     hasMore: boolean;
-    chunks?: Array<{
-      chunkId: number;
-      sentences: ApiExerciseShape[];
+    blocks?: Array<{
+      blockId: number;
+      sentences: Array<{
+        id: number | string;
+        original: string;
+        blanks: ExerciseBlank[];
+      }>;
     }>;
   };
 
@@ -114,9 +124,13 @@ export async function getVideoExercisesPage(
     limit: data.limit,
     total: data.total,
     hasMore: data.hasMore,
-    chunks: (data.chunks ?? []).map((chunk) => ({
-      chunkId: chunk.chunkId,
-      sentences: chunk.sentences.map(normalizeExercise),
+    blocks: (data.blocks ?? []).map((block) => ({
+      blockId: block.blockId,
+      sentences: block.sentences.map((sentence) => ({
+        id: sentence.id,
+        original: sentence.original,
+        blanks: sentence.blanks ?? [],
+      })),
     })),
   };
 }
