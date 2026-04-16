@@ -40,6 +40,13 @@ export interface ShadowSession {
   scoreCategory: 'excellent' | 'good' | 'needs-improvement';
 }
 
+export interface UserProgress {
+  date: string; // YYYY-MM-DD format
+  totalExercises: number;
+  avgAccuracy: number;
+  streakCount: number;
+}
+
 export interface DiffResult {
   type: 'match' | 'insert' | 'delete' | 'replace';
   value: string;

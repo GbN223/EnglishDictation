@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useDictationStore } from '../store/dictationStore';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { useActiveSentence } from '../hooks/useActiveSentence';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import YouTubeSubtitleLoader from './YouTubeSubtitleLoader';
 import ExerciseList from './ExerciseList';
 import {
@@ -108,6 +109,44 @@ export default function PracticeMode() {
   const [multiScore, setMultiScore] = useState<{ correct: number; total: number } | null>(null);
   const [blockCount, setBlockCount] = useState(INITIAL_BLOCKS);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Keyboard shortcuts for practice mode
+  useKeyboardShortcuts({
+    onPlayPause: () => {
+      if (isPlaying) {
+        stop();
+      } else {
+        handleSpeak();
+      }
+    },
+    onSubmit: () => {
+      if (renderer === 'multi-sentence') {
+        handleCheckAnswer();
+      } else {
+        handleFinishClassicSession();
+      }
+    },
+    onReplay: () => {
+      handleStop();
+      setTimeout(() => handleSpeak(), 100);
+    },
+    onNavigateUp: () => {
+      // Navigate to previous input field
+      const inputs = document.querySelectorAll('input[type="text"]');
+      const focusedIndex = Array.from(inputs).findIndex(el => el === document.activeElement);
+      if (focusedIndex > 0) {
+        (inputs[focusedIndex - 1] as HTMLElement).focus();
+      }
+    },
+    onNavigateDown: () => {
+      // Navigate to next input field
+      const inputs = document.querySelectorAll('input[type="text"]');
+      const focusedIndex = Array.from(inputs).findIndex(el => el === document.activeElement);
+      if (focusedIndex < inputs.length - 1) {
+        (inputs[focusedIndex + 1] as HTMLElement).focus();
+      }
+    },
+  });
 
   // Convert exercises to sentence timestamps format for useActiveSentence hook
   // Memoize to prevent unnecessary re-calculations that could break audio sync
@@ -481,6 +520,7 @@ export default function PracticeMode() {
                 setAnswers((prev) => ({ ...prev, [`${exerciseIndex}-${blankIndex}`]: value }))
               }
               activeSentenceId={activeSentenceId}
+              targetText={practiceOriginalText}
             />
             {renderer === 'multi-sentence' && multiScore && (
               <div className="rounded-lg border border-border bg-accent/30 p-3 text-sm">
