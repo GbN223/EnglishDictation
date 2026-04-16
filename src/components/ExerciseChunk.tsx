@@ -7,6 +7,7 @@ interface ExerciseChunkProps {
   answers: Record<string, string>;
   checked: boolean;
   onAnswerChange: (exerciseIndex: number, blankIndex: number, value: string) => void;
+  activeSentenceId?: string | number | null;
 }
 
 export default function ExerciseChunk({
@@ -15,6 +16,7 @@ export default function ExerciseChunk({
   answers,
   checked,
   onAnswerChange,
+  activeSentenceId,
 }: ExerciseChunkProps) {
   return (
     <div className="rounded-xl border border-border bg-accent/20 p-4">
@@ -31,6 +33,7 @@ export default function ExerciseChunk({
             end_time: exerciseIndex * 5 + 5,
             blanks_json: sentence.blanks,
           };
+          const isActive = activeSentenceId !== null && activeSentenceId === sentence.id;
           return (
             <InlineClozeSentence
               key={`block-${block.blockId}-${sentence.id ?? exerciseIndex}`}
@@ -40,6 +43,7 @@ export default function ExerciseChunk({
               checked={checked}
               onAnswerChange={onAnswerChange}
               compact
+              isActive={isActive}
             />
           );
         })}
