@@ -1,10 +1,48 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useDictationStore } from '../store/dictationStore';
 import { getLanguage } from '../config/languages';
+
+/**
+ * A mock audio element ref for Web Speech API that provides timeupdate events
+ */
+export interface SpeechAudioRef {
+  current: {
+    currentTime: number;
+    addEventListener: (event: string, handler: () => void) => void;
+    removeEventListener: (event: string, handler: () => void) => void;
+  } | null;
+}
 
 export function useTextToSpeech() {
   const { selectedLanguage, practiceSpeed, isPlaying, setPlaying } = useDictationStore();
   const [isSupported, setIsSupported] = useState(false);
+  const currentTimeRef = useRef<number>(0);
+  const timeUpdateHandlersRef = useRef<Set<() => void>>(new Set());
+  const seekedHandlersRef = useRef<Set<() => void>>(new Set());
+  const timerRef = useRef<number | null>(null);
+
+  // Create a mock audio element ref that mimics HTMLAudioElement behavior
+  const audioRef = useRef<{
+    currentTime: number;
+    addEventListener: (event: string, handler: () => void) => void;
+    removeEventListener: (event: string, handler: () => void) => void;
+  } | null>({
+    currentTime: 0,
+    addEventListener: (event: string, handler: () => void) => {
+      if (event === 'timeupdate') {
+        timeUpdateHandlersRef.current.add(handler);
+      } else if (event === 'seeked') {
+        seekedHandlersRef.current.add(handler);
+      }
+    },
+    removeEventListener: (event: string, handler: () => void) => {
+      if (event === 'timeupdate') {
+        timeUpdateHandlersRef.current.delete(handler);
+      } else if (event === 'seeked') {
+        seekedHandlersRef.current.delete(handler);
+      }
+    },
+  });
 
   useEffect(() => {
     // Check if speech synthesis is supported
@@ -13,6 +51,40 @@ export function useTextToSpeech() {
     }
   }, []);
 
+  // Start/stop time tracking timer when playing state changes
+  useEffect(() => {
+    if (isPlaying) {
+      // Start tracking time
+      const startTime = Date.now();
+      const startOffset = currentTimeRef.current;
+      
+      timerRef.current = window.setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        currentTimeRef.current = startOffset + elapsed;
+        
+        // Update the mock audio element's currentTime
+        if (audioRef.current) {
+          audioRef.current.currentTime = currentTimeRef.current;
+        }
+        
+        // Fire timeupdate handlers
+        timeUpdateHandlersRef.current.forEach((handler) => handler());
+      }, 100); // Update every 100ms
+    } else {
+      // Stop tracking time
+      if (timerRef.current !== null) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+
+    return () => {
+      if (timerRef.current !== null) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [isPlaying]);
+
   const speak = useCallback((text: string) => {
     if (!('speechSynthesis' in window) || !text) {
       return;
@@ -20,6 +92,12 @@ export function useTextToSpeech() {
 
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
+    
+    // Reset time tracking
+    currentTimeRef.current = 0;
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+    }
 
     const utterance = new SpeechSynthesisUtterance(text);
     const lang = getLanguage(selectedLanguage);
@@ -49,6 +127,10 @@ export function useTextToSpeech() {
 
     utterance.onend = () => {
       setPlaying(false);
+      currentTimeRef.current = 0;
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+      }
     };
 
     utterance.onerror = () => {
@@ -61,6 +143,10 @@ export function useTextToSpeech() {
   const stop = useCallback(() => {
     window.speechSynthesis.cancel();
     setPlaying(false);
+    currentTimeRef.current = 0;
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+    }
   }, [setPlaying]);
 
   const pause = useCallback(() => {
@@ -84,6 +170,9 @@ export function useTextToSpeech() {
     return () => {
       window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
       window.speechSynthesis.cancel();
+      if (timerRef.current !== null) {
+        clearInterval(timerRef.current);
+      }
     };
   }, []);
 
@@ -94,5 +183,6 @@ export function useTextToSpeech() {
     resume,
     isSupported,
     isPlaying,
+    audioRef,
   };
 }

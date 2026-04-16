@@ -9,6 +9,7 @@ interface InlineClozeSentenceProps {
   checked: boolean;
   onAnswerChange: (exerciseIndex: number, blankIndex: number, value: string) => void;
   compact?: boolean;
+  isActive?: boolean;
 }
 
 function keyFor(exerciseIndex: number, blankIndex: number): string {
@@ -39,12 +40,31 @@ export default function InlineClozeSentence({
   checked,
   onAnswerChange,
   compact = false,
+  isActive = false,
 }: InlineClozeSentenceProps) {
   const words = exercise.sentence_text.split(/\s+/).filter(Boolean);
 
+  // Apply focus mode styling based on active state
+  const containerClasses = compact
+    ? `text-sm transition-all duration-300 ${
+        isActive
+          ? 'opacity-100 font-bold text-blue-600 bg-blue-50 rounded-lg p-2'
+          : 'opacity-30 blur-[1px]'
+      }`
+    : `rounded-lg border border-border p-3 text-sm transition-all duration-300 ${
+        isActive
+          ? 'opacity-100 font-bold text-blue-600 bg-blue-50 border-blue-300'
+          : 'opacity-30 blur-[1px]'
+      }`;
+
   return (
-    <div className={compact ? 'text-sm' : 'rounded-lg border border-border p-3 text-sm'}>
-      <div className="mb-2 text-xs text-muted-foreground">Sentence {exerciseIndex + 1}</div>
+    <div
+      className={containerClasses}
+      data-sentence-id={exercise.id ?? exerciseIndex}
+    >
+      <div className={`mb-2 text-xs ${isActive ? 'text-blue-500' : 'text-muted-foreground'}`}>
+        Sentence {exerciseIndex + 1}
+      </div>
       <div className="flex flex-wrap gap-2 leading-relaxed">
         {words.map((word, wordIndex) => {
           const blank = exercise.blanks_json.find((item) => item.index === wordIndex);

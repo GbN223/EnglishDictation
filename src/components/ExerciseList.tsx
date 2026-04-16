@@ -14,6 +14,7 @@ interface ExerciseListProps {
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
   onAnswerChange: (exerciseIndex: number, blankIndex: number, value: string) => void;
+  activeSentenceId?: string | number | null;
 }
 
 export default function ExerciseList({
@@ -27,6 +28,7 @@ export default function ExerciseList({
   isLoadingMore = false,
   onLoadMore,
   onAnswerChange,
+  activeSentenceId,
 }: ExerciseListProps) {
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const [checkedBySentence, setCheckedBySentence] = useState<Record<number, boolean>>({});
@@ -115,6 +117,7 @@ export default function ExerciseList({
               answers={answers}
               checked={checked}
               onAnswerChange={onAnswerChange}
+              activeSentenceId={activeSentenceId}
             />
           );
         })}
@@ -156,6 +159,7 @@ export default function ExerciseList({
             answers={answers}
             checked={checked}
             onAnswerChange={onAnswerChange}
+            activeSentenceId={activeSentenceId}
           />
         );
       })}
