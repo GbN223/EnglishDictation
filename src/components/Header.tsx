@@ -1,14 +1,48 @@
 import { useDictationStore } from '../store/dictationStore';
-import { Mic, Sun, Moon, FileText, Monitor, Headphones } from 'lucide-react';
+import { Mic, Sun, Moon, FileText, Monitor, Headphones, Volume2 } from 'lucide-react';
 
 export default function Header() {
   const { isDarkMode, toggleDarkMode, appMode, setAppMode } = useDictationStore();
 
   const isPracticeMode = appMode === 'practice';
+  const isShadowMode = appMode === 'shadow';
 
   const toggleMode = () => {
-    setAppMode(isPracticeMode ? 'dictation' : 'practice');
+    if (isPracticeMode) {
+      setAppMode('shadow');
+    } else if (isShadowMode) {
+      setAppMode('dictation');
+    } else {
+      setAppMode('practice');
+    }
   };
+
+  const getModeInfo = () => {
+    if (isPracticeMode) {
+      return {
+        icon: <Headphones className="h-4 w-4" />,
+        label: 'Practice',
+        nextLabel: 'Shadow',
+        nextIcon: <Volume2 className="h-4 w-4" />,
+      };
+    } else if (isShadowMode) {
+      return {
+        icon: <Volume2 className="h-4 w-4" />,
+        label: 'Shadow',
+        nextLabel: 'Dictation',
+        nextIcon: <Monitor className="h-4 w-4" />,
+      };
+    } else {
+      return {
+        icon: <Monitor className="h-4 w-4" />,
+        label: 'Dictation',
+        nextLabel: 'Practice',
+        nextIcon: <Headphones className="h-4 w-4" />,
+      };
+    }
+  };
+
+  const modeInfo = getModeInfo();
 
   const wordCount = useDictationStore.getState().currentText.trim()
     ? useDictationStore.getState().currentText.trim().split(/\s+/).length
@@ -33,21 +67,12 @@ export default function Header() {
         <button
           onClick={toggleMode}
           className={`flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-accent ${
-            isPracticeMode ? 'bg-primary/10 text-primary' : ''
+            isPracticeMode || isShadowMode ? 'bg-primary/10 text-primary' : ''
           }`}
-          aria-label={isPracticeMode ? 'Switch to dictation mode' : 'Switch to practice mode'}
+          aria-label={`Switch to ${modeInfo.nextLabel.toLowerCase()} mode`}
         >
-          {isPracticeMode ? (
-            <>
-              <Monitor className="h-4 w-4" />
-              <span className="hidden sm:inline">Dictation</span>
-            </>
-          ) : (
-            <>
-              <Headphones className="h-4 w-4" />
-              <span className="hidden sm:inline">Practice</span>
-            </>
-          )}
+          {modeInfo.icon}
+          <span className="hidden sm:inline">{modeInfo.label}</span>
         </button>
 
         {/* Stats */}

@@ -2,72 +2,32 @@
 # Build artifacts
 dist/
 build/
-*.js
 
 # Dependencies
 node_modules/
 
-# Editors
-.vscode/
-.idea/
-
 # Environment
 .env
 .env.local
-*.env.*
+.env.*
 
-# Logs and temp files
-*.log
-*.tmp
+# Editor/IDE
+.vscode/
+.idea/
 *.swp
+*.swo
+*.tmp
+
+# Logs
+*.log
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# Compiled files
-*.o
-*.obj
-*.so
-*.dll
-*.exe
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# MyPy
-.mypy_cache/
-
-# PyTest
-.pytest_cache/
-
-# Gradle
-.gradle/
-
-# Target
-target/
-
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
+.Python
+venv/
+.venv/
+.env
 ```

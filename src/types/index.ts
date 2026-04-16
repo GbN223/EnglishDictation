@@ -1,6 +1,6 @@
 // Core types for the dictation app
 
-export type AppMode = 'dictation' | 'practice';
+export type AppMode = 'dictation' | 'practice' | 'shadow';
 
 export type DictationStatus = 'idle' | 'listening' | 'paused' | 'error';
 
@@ -28,6 +28,16 @@ export interface PracticeSession {
   accuracy: number;
   timestamp: number;
   language: string;
+}
+
+export interface ShadowSession {
+  id: string;
+  targetText: string;
+  spokenText: string;
+  accuracy: number;
+  timestamp: number;
+  language: string;
+  scoreCategory: 'excellent' | 'good' | 'needs-improvement';
 }
 
 export interface DiffResult {
