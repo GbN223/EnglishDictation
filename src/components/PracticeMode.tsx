@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDictationStore } from '../store/dictationStore';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
+import { useActiveSentence } from '../hooks/useActiveSentence';
 import YouTubeSubtitleLoader from './YouTubeSubtitleLoader';
 import ExerciseList from './ExerciseList';
 import {
@@ -93,7 +94,7 @@ export default function PracticeMode() {
     addPracticeSession,
   } = useDictationStore();
 
-  const { speak, stop, isSupported, isPlaying } = useTextToSpeech();
+  const { speak, stop, isSupported, isPlaying, audioRef } = useTextToSpeech();
 
   const [difficulty, setDifficulty] = useState<PracticeDifficulty>('Medium');
   const [showResult, setShowResult] = useState(false);
@@ -107,6 +108,16 @@ export default function PracticeMode() {
   const [multiScore, setMultiScore] = useState<{ correct: number; total: number } | null>(null);
   const [blockCount, setBlockCount] = useState(INITIAL_BLOCKS);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Convert exercises to sentence timestamps format for useActiveSentence hook
+  const sentenceTimestamps = exercises.map((ex) => ({
+    id: ex.id ?? 0,
+    start_time: ex.start_time,
+    end_time: ex.end_time,
+  }));
+
+  // Use the active sentence hook to track which sentence is currently playing
+  const activeSentenceId = useActiveSentence(audioRef, sentenceTimestamps);
 
   const currentTexts = PRACTICE_TEXTS[difficulty];
   const randomText = currentTexts[Math.floor(Math.random() * currentTexts.length)];
@@ -464,6 +475,7 @@ export default function PracticeMode() {
               onAnswerChange={(exerciseIndex, blankIndex, value) =>
                 setAnswers((prev) => ({ ...prev, [`${exerciseIndex}-${blankIndex}`]: value }))
               }
+              activeSentenceId={activeSentenceId}
             />
             {renderer === 'multi-sentence' && multiScore && (
               <div className="rounded-lg border border-border bg-accent/30 p-3 text-sm">
