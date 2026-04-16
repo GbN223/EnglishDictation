@@ -83,7 +83,7 @@ export function useTextToSpeech() {
         clearInterval(timerRef.current);
       }
     };
-  }, [isPlaying]);
+  }, [isPlaying, audioRef]);
 
   const speak = useCallback((text: string) => {
     if (!('speechSynthesis' in window) || !text) {

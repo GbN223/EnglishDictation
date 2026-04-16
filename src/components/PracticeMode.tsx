@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useDictationStore } from '../store/dictationStore';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { useActiveSentence } from '../hooks/useActiveSentence';
@@ -110,11 +110,16 @@ export default function PracticeMode() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Convert exercises to sentence timestamps format for useActiveSentence hook
-  const sentenceTimestamps = exercises.map((ex) => ({
-    id: ex.id ?? 0,
-    start_time: ex.start_time,
-    end_time: ex.end_time,
-  }));
+  // Memoize to prevent unnecessary re-calculations that could break audio sync
+  const sentenceTimestamps = useMemo(
+    () =>
+      exercises.map((ex) => ({
+        id: ex.id ?? 0,
+        start_time: ex.start_time,
+        end_time: ex.end_time,
+      })),
+    [exercises]
+  );
 
   // Use the active sentence hook to track which sentence is currently playing
   const activeSentenceId = useActiveSentence(audioRef, sentenceTimestamps);
