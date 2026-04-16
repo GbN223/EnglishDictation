@@ -80,7 +80,7 @@ export async function generateExercisesFromText(text: string): Promise<Generated
   }
 
   const data = (await response.json()) as { exercises?: ApiExerciseShape[] };
-  return (data.exercises ?? []).map(normalizeExercise);
+  return (data.exercises ?? []).map((raw, index) => normalizeExercise(raw, index));
 }
 
 export async function getWordDefinition(word: string): Promise<VocabularyInfo> {

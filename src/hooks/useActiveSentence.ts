@@ -74,7 +74,7 @@ export function useActiveSentence(
       el.removeEventListener('timeupdate', handleTimeUpdate);
       el.removeEventListener('seeked', handleTimeUpdate);
     };
-  }, [audioRef, sentences, activeSentenceId]);
+  }, [audioRef, sentences]);
 
   return activeSentenceId;
 }
