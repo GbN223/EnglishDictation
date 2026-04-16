@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AppMode, DictationStatus, TranscriptSegment, Draft, PracticeSession, ShadowSession } from '../types';
+import { AppMode, DictationStatus, TranscriptSegment, Draft, PracticeSession, ShadowSession, UserProgress } from '../types';
 
 interface DictationStore {
   // State
@@ -31,6 +31,11 @@ interface DictationStore {
   shadowIsListening: boolean;
   shadowInterimTranscript: string;
   shadowAutoStartDelay: number; // delay in ms before auto-starting speech recognition
+  
+  // Progress heatmap state
+  userProgress: UserProgress[];
+  currentStreak: number;
+  longestStreak: number;
   
   // Actions
   setAppMode: (mode: AppMode) => void;
@@ -70,6 +75,11 @@ interface DictationStore {
   setShadowIsListening: (listening: boolean) => void;
   setShadowInterimTranscript: (transcript: string) => void;
   setShadowAutoStartDelay: (delay: number) => void;
+  
+  // Progress heatmap actions
+  setUserProgress: (progress: UserProgress[]) => void;
+  setCurrentStreak: (streak: number) => void;
+  setLongestStreak: (streak: number) => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 11);
@@ -105,6 +115,11 @@ export const useDictationStore = create<DictationStore>()(
       shadowIsListening: false,
       shadowInterimTranscript: '',
       shadowAutoStartDelay: 500,
+
+      // Progress heatmap initial state
+      userProgress: [],
+      currentStreak: 0,
+      longestStreak: 0,
 
       // Actions
       setAppMode: (mode: AppMode) => set({ appMode: mode }),
@@ -223,6 +238,13 @@ export const useDictationStore = create<DictationStore>()(
       setShadowInterimTranscript: (transcript: string) => set({ shadowInterimTranscript: transcript }),
 
       setShadowAutoStartDelay: (delay: number) => set({ shadowAutoStartDelay: delay }),
+
+      // Progress heatmap actions
+      setUserProgress: (progress: UserProgress[]) => set({ userProgress: progress }),
+
+      setCurrentStreak: (streak: number) => set({ currentStreak: streak }),
+
+      setLongestStreak: (streak: number) => set({ longestStreak: streak }),
     }),
     {
       name: 'dictation-storage',

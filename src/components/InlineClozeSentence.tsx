@@ -1,4 +1,5 @@
 import type { GeneratedExercise } from '../services/practiceApi';
+import { applyAutoPunctuation, getHintForBlank } from '../utils/autoPunctuation';
 
 type ValidationStatus = 'correct' | 'incorrect' | null;
 
@@ -10,6 +11,7 @@ interface InlineClozeSentenceProps {
   onAnswerChange: (exerciseIndex: number, blankIndex: number, value: string) => void;
   compact?: boolean;
   isActive?: boolean;
+  targetText?: string; // For auto-punctuation reference
 }
 
 function keyFor(exerciseIndex: number, blankIndex: number): string {
@@ -41,8 +43,31 @@ export default function InlineClozeSentence({
   onAnswerChange,
   compact = false,
   isActive = false,
+  targetText,
 }: InlineClozeSentenceProps) {
   const words = exercise.sentence_text.split(/\s+/).filter(Boolean);
+
+  // Handle input change with auto-punctuation assist
+  const handleChange = (blankIndex: number, value: string) => {
+    // Apply auto-punctuation if we have target text
+    let processedValue = value;
+    if (targetText) {
+      processedValue = applyAutoPunctuation(value, targetText);
+    }
+    onAnswerChange(exerciseIndex, blankIndex, processedValue);
+  };
+
+  // Handle hint request (H key shortcut)
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>, blankIndex: number) => {
+    if (event.key === 'h' || event.key === 'H') {
+      const blank = exercise.blanks_json.find((item) => item.index === blankIndex);
+      if (blank && !checked) {
+        event.preventDefault();
+        const hint = getHintForBlank(blank.answer, false); // Reveal first letter
+        handleChange(blankIndex, hint);
+      }
+    }
+  };
 
   // Apply focus mode styling based on active state
   const containerClasses = compact
@@ -89,7 +114,8 @@ export default function InlineClozeSentence({
               key={`blank-${exerciseIndex}-${blank.index}`}
               type="text"
               value={answers[keyFor(exerciseIndex, blank.index)] ?? ''}
-              onChange={(event) => onAnswerChange(exerciseIndex, blank.index, event.target.value)}
+              onChange={(event) => handleChange(blank.index, event.target.value)}
+              onKeyDown={(event) => handleKeyDown(event, blank.index)}
               aria-label={`Sentence ${exerciseIndex + 1}, blank ${blank.index + 1}`}
               className={`w-24 border-0 border-b-2 bg-transparent text-center outline-none transition-colors ${statusClass}`}
             />
