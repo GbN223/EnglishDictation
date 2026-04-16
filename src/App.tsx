@@ -7,6 +7,7 @@ import ConfidenceIndicator from './components/ConfidenceIndicator';
 import VoiceWaveform from './components/VoiceWaveform';
 import DraftsManager from './components/DraftsManager';
 import PracticeMode from './components/PracticeMode';
+import ShadowReader from './components/ShadowReader';
 import TranslationModal from './components/TranslationModal';
 import ErrorDialog from './components/ErrorDialog';
 import YouTubeSubtitleLoader from './components/YouTubeSubtitleLoader';
@@ -39,6 +40,7 @@ export default function App() {
   const currentLang = getLanguage(selectedLanguage);
   const isListening = dictationStatus === 'listening';
   const isPracticeMode = appMode === 'practice';
+  const isShadowMode = appMode === 'shadow';
 
   // Handle save draft event
   useEffect(() => {
@@ -128,6 +130,8 @@ export default function App() {
           {/* Practice Mode */}
           {isPracticeMode ? (
             <PracticeMode />
+          ) : isShadowMode ? (
+            <ShadowReader />
           ) : (
             <>
               {/* Dictation Mode Controls */}
@@ -176,6 +180,10 @@ export default function App() {
           {isPracticeMode ? (
             <p>
               Practice Mode: Listen, speak/type, and check your accuracy
+            </p>
+          ) : isShadowMode ? (
+            <p>
+              Shadow Reading Mode: Listen and speak along to improve pronunciation
             </p>
           ) : (
             <>

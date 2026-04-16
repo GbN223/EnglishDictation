@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AppMode, DictationStatus, TranscriptSegment, Draft, PracticeSession } from '../types';
+import { AppMode, DictationStatus, TranscriptSegment, Draft, PracticeSession, ShadowSession } from '../types';
 
 interface DictationStore {
   // State
@@ -22,6 +22,15 @@ interface DictationStore {
   practiceSessions: PracticeSession[];
   practiceSpeed: number; // words per minute for TTS
   isPlaying: boolean;
+  
+  // Shadow mode state
+  shadowTargetText: string;
+  shadowSpokenText: string;
+  shadowAccuracy: number | null;
+  shadowSessions: ShadowSession[];
+  shadowIsListening: boolean;
+  shadowInterimTranscript: string;
+  shadowAutoStartDelay: number; // delay in ms before auto-starting speech recognition
   
   // Actions
   setAppMode: (mode: AppMode) => void;
@@ -51,6 +60,16 @@ interface DictationStore {
   clearPracticeSession: () => void;
   setPracticeSpeed: (speed: number) => void;
   setPlaying: (playing: boolean) => void;
+  
+  // Shadow mode actions
+  setShadowTargetText: (text: string) => void;
+  setShadowSpokenText: (text: string) => void;
+  setShadowAccuracy: (accuracy: number | null) => void;
+  addShadowSession: (session: ShadowSession) => void;
+  clearShadowSession: () => void;
+  setShadowIsListening: (listening: boolean) => void;
+  setShadowInterimTranscript: (transcript: string) => void;
+  setShadowAutoStartDelay: (delay: number) => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 11);
@@ -77,6 +96,15 @@ export const useDictationStore = create<DictationStore>()(
       practiceSessions: [],
       practiceSpeed: 150,
       isPlaying: false,
+
+      // Shadow mode initial state
+      shadowTargetText: '',
+      shadowSpokenText: '',
+      shadowAccuracy: null,
+      shadowSessions: [],
+      shadowIsListening: false,
+      shadowInterimTranscript: '',
+      shadowAutoStartDelay: 500,
 
       // Actions
       setAppMode: (mode: AppMode) => set({ appMode: mode }),
@@ -169,6 +197,32 @@ export const useDictationStore = create<DictationStore>()(
       setPracticeSpeed: (speed: number) => set({ practiceSpeed: speed }),
       
       setPlaying: (playing: boolean) => set({ isPlaying: playing }),
+
+      // Shadow mode actions
+      setShadowTargetText: (text: string) => set({ shadowTargetText: text }),
+
+      setShadowSpokenText: (text: string) => set({ shadowSpokenText: text }),
+
+      setShadowAccuracy: (accuracy: number | null) => set({ shadowAccuracy: accuracy }),
+
+      addShadowSession: (session: ShadowSession) =>
+        set((state) => ({
+          shadowSessions: [session, ...state.shadowSessions],
+        })),
+
+      clearShadowSession: () =>
+        set({ 
+          shadowTargetText: '', 
+          shadowSpokenText: '', 
+          shadowAccuracy: null,
+          shadowInterimTranscript: '',
+        }),
+
+      setShadowIsListening: (listening: boolean) => set({ shadowIsListening: listening }),
+
+      setShadowInterimTranscript: (transcript: string) => set({ shadowInterimTranscript: transcript }),
+
+      setShadowAutoStartDelay: (delay: number) => set({ shadowAutoStartDelay: delay }),
     }),
     {
       name: 'dictation-storage',
@@ -180,6 +234,8 @@ export const useDictationStore = create<DictationStore>()(
         appMode: state.appMode,
         practiceSpeed: state.practiceSpeed,
         practiceSessions: state.practiceSessions,
+        shadowSessions: state.shadowSessions,
+        shadowAutoStartDelay: state.shadowAutoStartDelay,
       }),
     }
   )
