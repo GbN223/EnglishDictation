@@ -105,7 +105,7 @@ export default function PracticeMode() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [exercises, setExercises] = useState<GeneratedExercise[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [renderer, setRenderer] = useState<PracticeRenderer>('classic-inline');
+  const [renderer, setRenderer] = useState<PracticeRenderer>('multi-sentence');
   const [multiScore, setMultiScore] = useState<{ correct: number; total: number } | null>(null);
   const [blockCount, setBlockCount] = useState(INITIAL_BLOCKS);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -120,11 +120,7 @@ export default function PracticeMode() {
       }
     },
     onSubmit: () => {
-      if (renderer === 'multi-sentence') {
-        handleCheckAnswer();
-      } else {
-        handleFinishClassicSession();
-      }
+      handleCheckAnswer();
     },
     onReplay: () => {
       handleStop();
@@ -277,41 +273,6 @@ export default function PracticeMode() {
     });
   };
 
-  const handleFinishClassicSession = () => {
-    if (!practiceOriginalText || exercises.length === 0) return;
-
-    const totalBlanks = exercises.reduce((sum, sentence) => sum + sentence.blanks_json.length, 0);
-    const correctBlanks = exercises.reduce((sum, sentence, sentenceIndex) => {
-      const correctInSentence = sentence.blanks_json.filter(
-        (blank) => checkAnswer(sentenceIndex, blank.index, blank.answer) === 'correct'
-      ).length;
-      return sum + correctInSentence;
-    }, 0);
-    const accuracy = totalBlanks > 0 ? Math.round((correctBlanks / totalBlanks) * 100) : 100;
-
-    const userText = exercises
-      .map((sentence, sentenceIndex) =>
-        sentence.sentence_text.split(/\s+/)
-          .map((word, wordIndex) => {
-            const blank = sentence.blanks_json.find((item) => item.index === wordIndex);
-            if (!blank) return word;
-            const value = answers[getBlankKey(sentenceIndex, blank.index)]?.trim();
-            return value || '_______';
-          })
-          .join(' ')
-      )
-      .join(' ');
-
-    addPracticeSession({
-      id: Math.random().toString(36).substring(2, 11),
-      originalText: practiceOriginalText,
-      userText,
-      accuracy,
-      timestamp: Date.now(),
-      language: selectedLanguage,
-    });
-  };
-
   return (
     <div className="space-y-6">
       {/* Mode selector header */}
@@ -325,7 +286,7 @@ export default function PracticeMode() {
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           <RotateCcw className="h-4 w-4" />
-          New Exercise
+          Start
         </button>
       </div>
 
@@ -473,21 +434,6 @@ export default function PracticeMode() {
               <button
                 type="button"
                 onClick={() => {
-                  setRenderer('classic-inline');
-                  setShowResult(false);
-                  setMultiScore(null);
-                }}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  renderer === 'classic-inline'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'border border-border bg-card hover:bg-accent'
-                }`}
-              >
-                Classic Inline
-              </button>
-              <button
-                type="button"
-                onClick={() => {
                   setRenderer('multi-sentence');
                   setShowResult(false);
                   setMultiScore(null);
@@ -498,7 +444,7 @@ export default function PracticeMode() {
                     : 'border border-border bg-card hover:bg-accent'
                 }`}
               >
-                Multi-Sentence
+                Back to Back
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -520,7 +466,6 @@ export default function PracticeMode() {
                 setAnswers((prev) => ({ ...prev, [`${exerciseIndex}-${blankIndex}`]: value }))
               }
               activeSentenceId={activeSentenceId}
-              targetText={practiceOriginalText}
             />
             {renderer === 'multi-sentence' && multiScore && (
               <div className="rounded-lg border border-border bg-accent/30 p-3 text-sm">
@@ -548,15 +493,7 @@ export default function PracticeMode() {
                 >
                   Check Answers
                 </button>
-              ) : (
-                <button
-                  onClick={handleFinishClassicSession}
-                  disabled={exercises.length === 0 || exercises.every((sentence) => sentence.blanks_json.length === 0)}
-                  className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-                >
-                  Finish Session
-                </button>
-              )}
+              ) : null}
             </div>
           </div>
         </>
