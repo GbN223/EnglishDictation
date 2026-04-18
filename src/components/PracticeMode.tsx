@@ -16,6 +16,7 @@ import {
   RotateCcw,
   ChevronDown,
   ChevronUp,
+  ArrowLeft,
 } from 'lucide-react';
 
 // Sample practice texts for different levels
@@ -236,6 +237,17 @@ export default function PracticeMode() {
     }, 250);
   };
 
+  const handleGoBack = () => {
+    setPracticeOriginalText('');
+    setAnswers({});
+    setShowResult(false);
+    setMultiScore(null);
+    setBlockCount(INITIAL_BLOCKS);
+    setIsLoadingMore(false);
+    setShowOriginal(false);
+    stop();
+  };
+
   const handleCheckAnswer = () => {
     if (!practiceOriginalText || visibleSentences.length === 0) return;
     setShowResult(true);
@@ -281,13 +293,24 @@ export default function PracticeMode() {
           Fill the blanks directly in each sentence
         </div>
 
-        <button
-          onClick={handleNewPractice}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          <RotateCcw className="h-4 w-4" />
-          Start
-        </button>
+        <div className="flex items-center gap-2">
+          {practiceOriginalText && (
+            <button
+              onClick={handleGoBack}
+              className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </button>
+          )}
+          <button
+            onClick={handleNewPractice}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Start
+          </button>
+        </div>
       </div>
 
       {/* Setup panel - shown when no active practice */}
@@ -444,7 +467,7 @@ export default function PracticeMode() {
                     : 'border border-border bg-card hover:bg-accent'
                 }`}
               >
-                Back to Back
+                Multi Incline
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
